@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Fitness Certificate Generator — Professional Edition</title>
+<style>
+/* ============================================================
+   SCREEN STYLES
+   ============================================================ */
+:root{
+  --ink:#1c2733;
+  --line:#c9d4dd;
+  --panel:#f4f7f9;
+  --accent:#155e75;
+  --accent-soft:#e3eef2;
+  --danger:#a02020;
+  --ok:#1a6b3c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:#e8edf1;
+  color:var(--ink);
+  font-size:14px;
+}
+/* ---- App layout: two panels ---- */
+.app{
+  display:flex;
+  gap:14px;
+  padding:14px;
+  align-items:flex-start;
+  max-width:1600px;
+  margin:0 auto;
+}
+.form-panel{
+  flex:0 0 460px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:16px;
+  max-height:calc(100vh - 28px);
+  overflow-y:auto;
+  position:sticky;
+  top:14px;
+}
+.preview-panel{
+  flex:1 1 auto;
+  min-width:0;
+}
+@media (max-width: 980px){
+  .app{flex-direction:column}
+  .form-panel{flex:none;width:100%;position:static;max-height:none}
+  .preview-panel{width:100%}
+}
+
+/* ---- Form styling ---- */
+h1.app-title{
+  font-size:17px;
+  margin:0 0 4px 0;
+  color:var(--accent);
+}
+p.app-sub{margin:0 0 12px 0;font-size:12px;color:#5b6b78}
+fieldset{
+  border:1px solid var(--line);
+  border-radius:5px;
+  margin:0 0 14px 0;
+  padding:10px 12px 12px 12px;
+}
+legend{
+  font-weight:bold;
+  font-size:13px;
+  color:var(--accent);
+  padding:0 6px;
+}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.row > .field{flex:1 1 0;min-width:0}
+.field{margin-bottom:8px}
+.field:last-child{margin-bottom:0}
+label{
+  display:block;
+  font-size:11.5px;
+  font-weight:bold;
+  margin-bottom:3px;
+  color:#33424f;
+}
+input[type=text],input[type=number],input[type=date],input[type=tel],
+input[type=email],select,textarea{
+  width:100%;
+  padding:6px 8px;
+  border:1px solid var(--line);
+  border-radius:4px;
+  font-family:inherit;
+  font-size:13px;
+  background:#fff;
+  color:var(--ink);
+}
+textarea{resize:vertical;min-height:48px}
+input:focus,select:focus,textarea:focus{
+  outline:2px solid var(--accent);
+  outline-offset:0;
+  border-color:var(--accent);
+}
+input.invalid{border-color:var(--danger);background:#fdf0f0}
+.hint{font-size:10.5px;color:#77858f;margin-top:2px}
+.err{font-size:10.5px;color:var(--danger);margin-top:2px;display:none}
+.err.show{display:block}
+input[type=file]{font-size:12px;width:100%}
+.file-actions{display:flex;align-items:center;gap:6px}
+.file-actions button{flex:0 0 auto}
+.readonly{background:var(--accent-soft)}
+
+/* ---- Buttons ---- */
+.btn{
+  display:inline-block;
+  padding:8px 14px;
+  border:1px solid var(--accent);
+  background:var(--accent);
+  color:#fff;
+  border-radius:4px;
+  font-size:13px;
+  font-weight:bold;
+  cursor:pointer;
+  font-family:inherit;
+}
+.btn:hover{background:#0f4a5c}
+.btn.secondary{background:#fff;color:var(--accent)}
+.btn.secondary:hover{background:var(--accent-soft)}
+.btn.danger{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:#fdf0f0}
+.btn.small{padding:4px 8px;font-size:11px;font-weight:normal}
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+  padding:10px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:5px;
+}
+.status-pill{
+  display:inline-block;
+  padding:2px 10px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:bold;
+}
+.status-pill.fit{background:#e2f3e8;color:var(--ok)}
+.status-pill.unfit{background:#fbe3e3;color:var(--danger)}
+.status-pill.further{background:#fdf3dc;color:#7a5a12}
+
+/* ---- Certificate sheet (screen) ---- */
+.sheet-wrap{
+  display:flex;
+  justify-content:center;
+}
+.sheet{
+  background:#fff;
+  width:210mm;
+  min-height:297mm;
+  padding:15mm 20mm;
+  box-shadow:0 2px 14px rgba(20,40,60,.18);
+  color:#000;
+}
+@media (max-width: 900px){
+  .sheet{width:100%;min-height:0;padding:14px}
+}
+
+/* ============================================================
+   CERTIFICATE CONTENT — shared screen + print
+   ============================================================ */
+.cert{
+  font-family:"Times New Roman", Times, serif;
+  font-size:10.2pt;
+  line-height:1.28;
+  color:#000;
+}
+.cert .letterhead{
+  text-align:center;
+  border-bottom:2.5pt double #000;
+  padding-bottom:4pt;
+  margin-bottom:6pt;
+}
+.cert .letterhead img{
+  max-width:100%;
+  max-height:30mm;
+  display:block;
+  margin:0 auto;
+}
+.cert .lh-placeholder .clinic-name{
+  font-size:15pt;font-weight:bold;letter-spacing:.5pt;
+}
+.cert .lh-placeholder .clinic-line{font-size:9pt}
+.cert .top-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8pt;
+  margin-bottom:4pt;
+}
+.cert .cert-meta{font-size:9.5pt}
+.cert .cert-meta div{margin-bottom:1pt}
+.cert .photo-box{
+  width:26mm;height:32mm;
+  border:1pt solid #000;
+  display:flex;align-items:center;justify-content:center;
+  font-size:7.5pt;color:#333;text-align:center;
+  overflow:hidden;flex:0 0 auto;
+}
+.cert .photo-box img{width:100%;height:100%;object-fit:cover}
+.cert h2.cert-title{
+  text-align:center;
+  font-size:12.5pt;
+  font-weight:bold;
+  text-decoration:underline;
+  margin:2pt 0 6pt 0;
+  letter-spacing:.5pt;
+}
+.cert table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:5pt;
+}
+.cert table.bordered td,.cert table.bordered th{
+  border:1pt solid #000;
+  padding:1.5pt 4pt;
+  vertical-align:top;
+  font-size:9.3pt;
+}
+.cert table.bordered th{
+  background:#eee;
+  text-align:left;
+  font-size:9.3pt;
+}
+.cert .sec-head{
+  background:#e2e2e2;
+  font-weight:bold;
+  text-transform:uppercase;
+  font-size:9pt;
+  letter-spacing:.3pt;
+}
+.cert .lbl{font-weight:bold;white-space:nowrap}
+.cert table.patient-table td.lbl{width:30mm}
+.cert table.patient-table td{word-break:break-word}
+.cert .abn{font-weight:bold}
+.cert .declaration{
+  border:1.2pt solid #000;
+  padding:5pt 7pt;
+  margin:5pt 0;
+  font-size:10pt;
+}
+.cert .declaration .verdict{
+  font-size:11.5pt;font-weight:bold;letter-spacing:.5pt;
+}
+.cert .decl-reasons{margin:3pt 0 0 0;padding-left:14pt;font-size:9.3pt}
+.cert .sign-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-top:10pt;
+}
+.cert .sign-block{position:relative;text-align:left;min-width:60mm}
+.cert .sign-imgs{position:relative;height:18mm;margin-bottom:2pt}
+.cert .sign-imgs img.sig{max-height:16mm;max-width:55mm}
+.cert .sign-imgs img.stamp{
+  position:absolute;left:12mm;top:0;
+  max-height:18mm;max-width:40mm;opacity:.9;
+}
+.cert .sign-line{border-top:1pt solid #000;padding-top:2pt;font-size:9.5pt}
+.cert .cert-footer{
+  margin-top:8pt;
+  border-top:1.5pt solid #000;
+  padding-top:3pt;
+  font-size:8.5pt;
+  text-align:center;
+}
+.cert .date-block{font-size:9.5pt;text-align:left}
+
+/* ============================================================
+   PRINT STYLES — only the certificate prints, A4 portrait
+   ============================================================ */
+@page{
+  size:A4;
+  margin:15mm 20mm;
+}
+@media print{
+  body{background:#fff}
+  .form-panel,.toolbar,.app-header,.no-print{display:none !important}
+  .app{display:block;padding:0;margin:0;max-width:none}
+  .preview-panel{width:100%}
+  .sheet-wrap{display:block}
+  .sheet{
+    width:auto;min-height:0;
+    padding:0;margin:0;
+    box-shadow:none;
+  }
+  .cert{font-size:9.6pt}
+  .cert table.bordered td,.cert table.bordered th{font-size:8.8pt;padding:1pt 3pt}
+  .cert,.sheet{page-break-inside:avoid}
+  .cert .sec-head,.cert table.bordered th{
+    background:#eee !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= LEFT PANEL : FORM ================= -->
+  <div class="form-panel" id="formPanel">
+    <h1 class="app-title">Medical Fitness Certificate Generator</h1>
+    <p class="app-sub">All data is saved automatically in this browser. Works fully offline.</p>
+
+    <div class="toolbar">
+      <button type="button" class="btn" id="btnPrint" title="Print / Save as PDF">&#128424; Print / PDF</button>
+      <button type="button" class="btn secondary" id="btnExport">Export JSON</button>
+      <button type="button" class="btn secondary" id="btnImport">Import JSON</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button type="button" class="btn danger" id="btnReset">Reset All</button>
+    </div>
+    <div style="margin-bottom:12px">
+      Declaration: <span id="statusPill" class="status-pill fit">FIT</span>
+    </div>
+
+    <!-- Clinic details -->
+    <fieldset>
+      <legend>Clinic Details</legend>
+      <div class="field"><label for="clinicName">Clinic Name</label>
+        <input type="text" id="clinicName" data-store></div>
+      <div class="field"><label for="clinicAddress">Address</label>
+        <input type="text" id="clinicAddress" data-store></div>
+      <div class="row">
+        <div class="field"><label for="clinicPhone">Phone</label>
+          <input type="tel" id="clinicPhone" data-store></div>
+        <div class="field"><label for="clinicEmail">Email</label>
+          <input type="email" id="clinicEmail" data-store></div>
+      </div>
+      <div class="field"><label for="slmcNo">SLMC Registration Number</label>
+        <input type="text" id="slmcNo" data-store></div>
+      <div class="row">
+        <div class="field"><label for="doctorName">Doctor Name</label>
+          <input type="text" id="doctorName" data-store></div>
+        <div class="field"><label for="doctorQuals">Qualifications</label>
+          <input type="text" id="doctorQuals" data-store></div>
+      </div>
+    </fieldset>
+
+    <!-- Images -->
+    <fieldset>
+      <legend>Images (optional)</legend>
+      <div class="field"><label for="upLetterhead">Clinic Letterhead</label>
+        <div class="file-actions">
+          <input type="file" id="upLetterhead" accept="image/*" data-img="letterhead">
+          <button type="button" class="btn small secondary" data-clear="letterhead">Clear</button>
+        </div></div>
+      <div class="field"><label for="upPhoto">Patient Photo (passport size)</label>
+        <div class="file-actions">
+          <input type="file" id="upPhoto" accept="image/*" data-img="photo">
+          <button type="button" class="btn small secondary" data-clear="photo">Clear</button>
+        </div></div>
+      <div class="field"><label for="upSignature">Doctor Signature</label>
+        <div class="file-actions">
+          <input type="file" id="upSignature" accept="image/*" data-img="signature">
+          <button type="button" class="btn small secondary" data-clear="signature">Clear</button>
+        </div></div>
+      <div class="field"><label for="upStamp">Clinic Stamp</label>
+        <div class="file-actions">
+          <input type="file" id="upStamp" accept="image/*" data-img="stamp">
+          <button type="button" class="btn small secondary" data-clear="stamp">Clear</button>
+        </div></div>
+    </fieldset>
+
+    <!-- Certificate number & dates -->
+    <fieldset>
+      <legend>Certificate</legend>
+      <div class="field"><label for="certNo">Certificate Number (auto)</label>
+        <input type="text" id="certNo" class="readonly" readonly>
+        <div class="hint">Increments automatically with each Reset / new certificate.</div></div>
+      <div class="row">
+        <div class="field"><label for="testDate">Test Date</label>
+          <input type="date" id="testDate" data-store></div>
+        <div class="field"><label for="reportDate">Report Date</label>
+          <input type="date" id="reportDate" data-store></div>
+      </div>
+    </fieldset>
+
+    <!-- Patient information -->
+    <fieldset>
+      <legend>Patient Information</legend>
+      <div class="field"><label for="pName">Full Name</label>
+        <input type="text" id="pName" data-store></div>
+      <div class="row">
+        <div class="field"><label for="pDob">Date of Birth</label>
+          <input type="date" id="pDob" data-store></div>
+        <div class="field"><label for="pAge">Age (years)</label>
+          <input type="number" id="pAge" min="0" max="120" data-store data-min="0" data-max="120">
+          <div class="err" id="err-pAge">Age must be 0&ndash;120.</div></div>
+        <div class="field"><label for="pGender">Gender</label>
+          <select id="pGender" data-store>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select></div>
+      </div>
+      <div class="field"><label for="pAddress">Address</label>
+        <input type="text" id="pAddress" data-store></div>
+      <div class="row">
+        <div class="field"><label for="pContact">Contact Number</label>
+          <input type="tel" id="pContact" data-store data-pattern="^[0-9+\-\s()]{7,16}$">
+          <div class="err" id="err-pContact">Enter a valid phone number.</div></div>
+        <div class="field"><label for="pNationality">Nationality</label>
+          <input type="text" id="pNationality" data-store></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="pPassport">Passport Number</label>
+          <input type="text" id="pPassport" data-store data-pattern="^$|^[A-Za-z0-9]{5,12}$">
+          <div class="err" id="err-pPassport">5&ndash;12 letters/numbers.</div></div>
+        <div class="field"><label for="pNic">NIC</label>
+          <input type="text" id="pNic" data-store data-pattern="^$|^([0-9]{9}[VvXx]|[0-9]{12})$">
+          <div class="err" id="err-pNic">Use 123456789V or 12-digit NIC.</div></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="pOccupation">Occupation</label>
+          <input type="text" id="pOccupation" data-store></div>
+        <div class="field"><label for="pPurpose">Medical Purpose</label>
+          <input type="text" id="pPurpose" data-store></div>
+      </div>
+    </fieldset>
+
+    <!-- Anthropometry -->
+    <fieldset>
+      <legend>Anthropometry</legend>
+      <div class="row">
+        <div class="field"><label for="pWeight">Weight (kg)</label>
+          <input type="number" id="pWeight" step="0.1" min="1" max="300" data-store data-min="1" data-max="300">
+          <div class="err" id="err-pWeight">1&ndash;300 kg.</div></div>
+        <div class="field"><label for="pHeight">Height (cm)</label>
+          <input type="number" id="pHeight" step="0.1" min="20" max="250" data-store data-min="20" data-max="250">
+          <div class="err" id="err-pHeight">20&ndash;250 cm.</div></div>
+        <div class="field"><label for="pBmi">BMI (auto)</label>
+          <input type="text" id="pBmi" class="readonly" readonly></div>
+      </div>
+    </fieldset>
+
+    <!-- Blood -->
+    <fieldset>
+      <legend>Blood Investigations</legend>
+      <div class="row">
+        <div class="field"><label for="bGroup">Blood Group</label>
+          <select id="bGroup" data-store>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+            <option>Not Done</option>
+          </select></div>
+        <div class="field"><label for="bBp">Blood Pressure (mmHg)</label>
+          <input type="text" id="bBp" data-store placeholder="120/80"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="bFbs">FBS (mg/dL)</label>
+          <input type="text" id="bFbs" data-store></div>
+        <div class="field"><label for="bCreat">Serum Creatinine (mg/dL)</label>
+          <input type="text" id="bCreat" data-store></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="bSgot">SGOT (U/L)</label>
+          <input type="text" id="bSgot" data-store></div>
+        <div class="field"><label for="bSgpt">SGPT (U/L)</label>
+          <input type="text" id="bSgpt" data-store></div>
+      </div>
+      <div class="field"><label for="bLipid">Lipid Profile</label>
+        <input type="text" id="bLipid" data-store placeholder="e.g. TC 180, TG 120, LDL 100, HDL 45"></div>
+    </fieldset>
+
+    <!-- Infectious diseases -->
+    <fieldset>
+      <legend>Infectious Disease Screening</legend>
+      <div class="row">
+        <div class="field"><label for="idHiv">HIV</label>
+          <select id="idHiv" data-store>
+            <option>Non Reactive</option><option>Reactive</option>
+          </select></div>
+        <div class="field"><label for="idVdrl">VDRL</label>
+          <select id="idVdrl" data-store>
+            <option>Non Reactive</option><option>Reactive</option>
+          </select></div>
+        <div class="field"><label for="idHbsag">HBsAg</label>
+          <select id="idHbsag" data-store>
+            <option>Negative</option><option>Positive</option>
+          </select></div>
+      </div>
+    </fieldset>
+
+    <!-- Vision -->
+    <fieldset>
+      <legend>Vision</legend>
+      <div class="row">
+        <div class="field"><label for="vColour">Colour Vision</label>
+          <select id="vColour" data-store>
+            <option>Normal</option><option>Defective</option><option>N/A</option>
+          </select></div>
+        <div class="field"><label for="vAided">Aided / Unaided</label>
+          <select id="vAided" data-store>
+            <option>Unaided</option><option>Aided (glasses)</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="vNearL">Near Vision — Left</label>
+          <input type="text" id="vNearL" data-store placeholder="N6"></div>
+        <div class="field"><label for="vNearR">Near Vision — Right</label>
+          <input type="text" id="vNearR" data-store placeholder="N6"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="vFarL">Far Vision — Left</label>
+          <input type="text" id="vFarL" data-store placeholder="6/6"></div>
+        <div class="field"><label for="vFarR">Far Vision — Right</label>
+          <input type="text" id="vFarR" data-store placeholder="6/6"></div>
+      </div>
+    </fieldset>
+
+    <!-- Hearing -->
+    <fieldset>
+      <legend>Hearing</legend>
+      <div class="row">
+        <div class="field"><label for="hLeft">Left Ear</label>
+          <select id="hLeft" data-store data-exam="Hearing (Left Ear)">
+            <option>Normal</option><option>Abnormal</option><option>N/A</option>
+          </select></div>
+        <div class="field"><label for="hRight">Right Ear</label>
+          <select id="hRight" data-store data-exam="Hearing (Right Ear)">
+            <option>Normal</option><option>Abnormal</option><option>N/A</option>
+          </select></div>
+      </div>
+    </fieldset>
+
+    <!-- Mental examination -->
+    <fieldset>
+      <legend>Mental Examination</legend>
+      <div class="row">
+        <div class="field"><label for="mSpeech">Speech</label>
+          <select id="mSpeech" data-store data-exam="Speech">
+            <option>Normal</option><option>Abnormal</option><option>N/A</option>
+          </select></div>
+        <div class="field"><label for="mBehaviour">Behaviour</label>
+          <select id="mBehaviour" data-store data-exam="Behaviour">
+            <option>Normal</option><option>Abnormal</option><option>N/A</option>
+          </select></div>
+      </div>
+    </fieldset>
+
+    <!-- Chest X-ray -->
+    <fieldset>
+      <legend>Chest X-ray</legend>
+      <div class="field"><label for="cxr">Findings</label>
+        <textarea id="cxr" data-store placeholder="e.g. Normal chest radiograph. No active lung lesion."></textarea></div>
+    </fieldset>
+
+    <!-- System examination -->
+    <fieldset>
+      <legend>System Examination</legend>
+      <div id="systemsGrid"><!-- built by JS --></div>
+    </fieldset>
+  </div>
+
+  <!-- ================= RIGHT PANEL : LIVE PREVIEW ================= -->
+  <div class="preview-panel">
+    <div class="sheet-wrap">
+      <div class="sheet">
+        <div class="cert" id="cert"><!-- rendered by JS --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MEDICAL FITNESS CERTIFICATE GENERATOR
+   Single-file, offline, vanilla JS.
+   Sections:
+     1. Constants and configuration
+     2. Initialization
+     3. Storage (localStorage save / restore)
+     4. Calculation (BMI, age, declaration logic)
+     5. Validation
+     6. Rendering (live preview)
+     7. Printing / Export / Import / Reset
+   ============================================================ */
+
+/* -------------------- 1. CONSTANTS -------------------- */
+var STORE_KEY   = 'mfc_data_v1';     // all field values + images
+var COUNTER_KEY = 'mfc_counter_v1';  // certificate number counter
+
+var SYSTEM_EXAMS = [
+  ['sysCvs','CVS'],
+  ['sysResp','Respiratory'],
+  ['sysEnt','ENT'],
+  ['sysAbd','Abdomen'],
+  ['sysCns','CNS'],
+  ['sysSkin','Skin'],
+  ['sysExt','Extremities'],
+  ['sysSpine','Spine'],
+  ['sysHydro','Hydrocele'],
+  ['sysHernia','Hernia'],
+  ['sysDeform','Deformities']
+];
+
+var IMAGE_KEYS = ['letterhead','photo','signature','stamp'];
+
+/* Sample data loaded on very first run only */
+var SAMPLE_DATA = {
+  clinicName:'AARANYA MEDICALS',
+  clinicAddress:'Main Street, Manipay, Jaffna, Sri Lanka',
+  clinicPhone:'+94 77 000 0000',
+  clinicEmail:'aaranyamedicals@gmail.com',
+  slmcNo:'40150',
+  doctorName:'Dr. P. Umapathisivan',
+  doctorQuals:'MBBS',
+  pName:'MOHAMED RIFKAN',
+  pDob:'1994-03-15',
+  pAge:'32',
+  pGender:'Male',
+  pAddress:'No. 12, Temple Road, Jaffna',
+  pContact:'0771234567',
+  pNationality:'Sri Lankan',
+  pPassport:'N1234567',
+  pNic:'941234567V',
+  pOccupation:'Driver',
+  pPurpose:'Foreign Employment',
+  pWeight:'68.5',
+  pHeight:'170',
+  bGroup:'O+',
+  bBp:'120/80',
+  bFbs:'92 mg/dL',
+  bCreat:'0.9 mg/dL',
+  bSgot:'24 U/L',
+  bSgpt:'28 U/L',
+  bLipid:'TC 178, TG 110, LDL 98, HDL 46 mg/dL',
+  idHiv:'Non Reactive',
+  idVdrl:'Non Reactive',
+  idHbsag:'Negative',
+  vColour:'Normal',
+  vAided:'Unaided',
+  vNearL:'N6', vNearR:'N6',
+  vFarL:'6/6', vFarR:'6/6',
+  hLeft:'Normal', hRight:'Normal',
+  mSpeech:'Normal', mBehaviour:'Normal',
+  cxr:'Normal chest radiograph. No active lung lesion seen.'
+};
+
+var state = { images:{} };   // in-memory image data URLs
+
+/* -------------------- 2. INITIALIZATION -------------------- */
+function init(){
+  buildSystemsGrid();
+  var restored = restoreData();
+  if(!restored){ loadSampleData(); }
+  ensureCertNumber();
+  setDefaultDates();
+  bindEvents();
+  validateAll();
+  renderAll();
+}
+
+/* Build the System Examination selects dynamically to avoid duplicate HTML */
+function buildSystemsGrid(){
+  var host = document.getElementById('systemsGrid');
+  var html = '';
+  for(var i=0;i<SYSTEM_EXAMS.length;i+=2){
+    html += '<div class="row">';
+    html += systemField(SYSTEM_EXAMS[i]);
+    if(SYSTEM_EXAMS[i+1]) html += systemField(SYSTEM_EXAMS[i+1]);
+    html += '</div>';
+  }
+  host.innerHTML = html;
+}
+function systemField(pair){
+  var id = pair[0], name = pair[1];
+  return '<div class="field"><label for="'+id+'">'+name+'</label>'+
+    '<select id="'+id+'" data-store data-exam="'+name+'">'+
+    '<option>Normal</option><option>Abnormal</option><option>N/A</option>'+
+    '</select></div>';
+}
+
+/* Default dates: test = today, report = today + 10 days (only if empty) */
+function setDefaultDates(){
+  var t = document.getElementById('testDate');
+  var r = document.getElementById('reportDate');
+  if(!t.value){ t.value = isoDate(new Date()); }
+  if(!r.value){
+    var d = new Date(); d.setDate(d.getDate()+10);
+    r.value = isoDate(d);
+  }
+}
+function isoDate(d){
+  var m = ('0'+(d.getMonth()+1)).slice(-2);
+  var day = ('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+day;
+}
+
+/* Certificate number: MC-2026-000001, incremented locally */
+function ensureCertNumber(){
+  var el = document.getElementById('certNo');
+  if(el.value) return;
+  var n = parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10) + 1;
+  localStorage.setItem(COUNTER_KEY, String(n));
+  var year = new Date().getFullYear();
+  el.value = 'MC-'+year+'-'+('000000'+n).slice(-6);
+}
+
+function loadSampleData(){
+  for(var k in SAMPLE_DATA){
+    var el = document.getElementById(k);
+    if(el) el.value = SAMPLE_DATA[k];
+  }
+}
+
+/* -------------------- 3. STORAGE -------------------- */
+function saveData(){
+  var data = { fields:{}, images:state.images, certNo:document.getElementById('certNo').value };
+  eachStoredField(function(el){ data.fields[el.id] = el.value; });
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  }catch(e){
+    /* Storage may overflow with very large images — warn once */
+    console.warn('Could not save (storage full?). Try smaller images.', e);
+  }
+}
+
+function restoreData(){
+  var raw = localStorage.getItem(STORE_KEY);
+  if(!raw) return false;
+  try{
+    var data = JSON.parse(raw);
+    applyData(data);
+    return true;
+  }catch(e){ return false; }
+}
+
+function applyData(data){
+  if(data.fields){
+    for(var id in data.fields){
+      var el = document.getElementById(id);
+      if(el) el.value = data.fields[id];
+    }
+  }
+  state.images = data.images || {};
+  if(data.certNo) document.getElementById('certNo').value = data.certNo;
+}
+
+function eachStoredField(fn){
+  var els = document.querySelectorAll('[data-store]');
+  for(var i=0;i<els.length;i++) fn(els[i]);
+}
+
+/* -------------------- 4. CALCULATION -------------------- */
+function calcBmi(){
+  var w = parseFloat(document.getElementById('pWeight').value);
+  var h = parseFloat(document.getElementById('pHeight').value) / 100;
+  var out = '';
+  if(w > 0 && h > 0){
+    out = (Math.round((w/(h*h))*10)/10).toFixed(1);
+  }
+  document.getElementById('pBmi').value = out;
+  return out;
+}
+
+/* Declaration logic:
+   FIT only if HIV Non Reactive AND VDRL Non Reactive AND HBsAg Negative
+   AND every examination is Normal or N/A.
+   Infectious positives => UNFIT reasons.
+   Abnormal examinations => Requires Further Evaluation reasons.       */
+function evaluateDeclaration(){
+  var unfitReasons = [];
+  var furtherReasons = [];
+
+  if(val('idHiv') === 'Reactive')   unfitReasons.push('HIV is Reactive.');
+  if(val('idVdrl') === 'Reactive')  unfitReasons.push('VDRL is Reactive.');
+  if(val('idHbsag') === 'Positive') unfitReasons.push('HBsAg is Positive.');
+
+  var exams = document.querySelectorAll('[data-exam]');
+  for(var i=0;i<exams.length;i++){
+    var v = exams[i].value;
+    if(v !== 'Normal' && v !== 'N/A'){
+      furtherReasons.push(exams[i].getAttribute('data-exam') + ' examination abnormal.');
+    }
+  }
+  if(val('vColour') === 'Defective'){
+    furtherReasons.push('Colour vision defective.');
+  }
+
+  if(unfitReasons.length){
+    return { verdict:'UNFIT', cls:'unfit', reasons:unfitReasons.concat(furtherReasons) };
+  }
+  if(furtherReasons.length){
+    return { verdict:'REQUIRES FURTHER EVALUATION', cls:'further', reasons:furtherReasons };
+  }
+  return { verdict:'FIT', cls:'fit', reasons:[] };
+}
+
+function val(id){
+  var el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+/* -------------------- 5. VALIDATION -------------------- */
+function validateField(el){
+  var ok = true;
+  var v = el.value.trim();
+  if(el.hasAttribute('data-min') && v !== ''){
+    var num = parseFloat(v);
+    var mn = parseFloat(el.getAttribute('data-min'));
+    var mx = parseFloat(el.getAttribute('data-max'));
+    if(isNaN(num) || num < mn || num > mx) ok = false;
+  }
+  if(el.hasAttribute('data-pattern') && v !== ''){
+    var re = new RegExp(el.getAttribute('data-pattern'));
+    if(!re.test(v)) ok = false;
+  }
+  el.classList.toggle('invalid', !ok);
+  var err = document.getElementById('err-'+el.id);
+  if(err) err.classList.toggle('show', !ok);
+  return ok;
+}
+
+function validateAll(){
+  var all = document.querySelectorAll('[data-min],[data-pattern]');
+  for(var i=0;i<all.length;i++) validateField(all[i]);
+}
+
+/* -------------------- 6. RENDERING -------------------- */
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dash(s){ var t = String(s||'').trim(); return t ? esc(t) : '&mdash;'; }
+function fmtDate(iso){
+  if(!iso) return '&mdash;';
+  var p = iso.split('-');
+  if(p.length !== 3) return esc(iso);
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+/* Mark abnormal lab-type values in bold on the certificate */
+function mark(v, badValues){
+  var t = String(v||'').trim();
+  if(!t) return '&mdash;';
+  if(badValues && badValues.indexOf(t) !== -1) return '<span class="abn">'+esc(t)+'</span>';
+  return esc(t);
+}
+
+function renderAll(){
+  calcBmi();
+  var d = evaluateDeclaration();
+  renderStatusPill(d);
+  document.getElementById('cert').innerHTML = buildCertificateHtml(d);
+}
+
+function renderStatusPill(d){
+  var pill = document.getElementById('statusPill');
+  pill.textContent = d.verdict;
+  pill.className = 'status-pill ' + d.cls;
+}
+
+function buildCertificateHtml(decl){
+  var img = state.images;
+  var html = '';
+
+  /* --- Letterhead --- */
+  html += '<div class="letterhead">';
+  if(img.letterhead){
+    html += '<img src="'+img.letterhead+'" alt="Clinic letterhead">';
+  }else{
+    html += '<div class="lh-placeholder">'+
+      '<div class="clinic-name">'+dash(val('clinicName'))+'</div>'+
+      '<div class="clinic-line">'+dash(val('clinicAddress'))+'</div>'+
+      '<div class="clinic-line">Tel: '+dash(val('clinicPhone'))+' &nbsp;|&nbsp; Email: '+dash(val('clinicEmail'))+'</div>'+
+      '</div>';
+  }
+  html += '</div>';
+
+  /* --- Meta + photo --- */
+  html += '<div class="top-row"><div class="cert-meta">'+
+    '<div><span class="lbl">Certificate No:</span> '+dash(val('certNo'))+'</div>'+
+    '<div><span class="lbl">Date of Medical Test:</span> '+fmtDate(val('testDate'))+'</div>'+
+    '<div><span class="lbl">Date of Report:</span> '+fmtDate(val('reportDate'))+'</div>'+
+    '</div>'+
+    '<div class="photo-box">'+
+    (img.photo ? '<img src="'+img.photo+'" alt="Patient photo">' : 'PATIENT<br>PHOTO')+
+    '</div></div>';
+
+  /* --- Title (original spelling kept intentionally) --- */
+  html += '<h2 class="cert-title">SUMMERY OF THE DETAILED MEDICAL REPORT</h2>';
+
+  /* --- Patient details --- */
+  html += '<table class="bordered patient-table"><tbody>'+
+    '<tr><td class="lbl">Name</td><td colspan="3">'+dash(val('pName'))+'</td></tr>'+
+    tr2('Date of Birth', fmtDateRaw(val('pDob')), 'Age', val('pAge') ? val('pAge')+' years' : '')+
+    tr2('Gender', val('pGender'), 'Nationality', val('pNationality'))+
+    tr2('Passport No', val('pPassport'), 'NIC', val('pNic'))+
+    tr2('Occupation', val('pOccupation'), 'Contact', val('pContact'))+
+    '<tr><td class="lbl">Address</td><td colspan="3">'+dash(val('pAddress'))+'</td></tr>'+
+    '<tr><td class="lbl">Purpose of Medical</td><td colspan="3">'+dash(val('pPurpose'))+'</td></tr>'+
+    '</tbody></table>';
+
+  /* --- Anthropometry + blood --- */
+  html += '<table class="bordered"><tbody>'+
+    '<tr><td colspan="6" class="sec-head">Anthropometry &amp; Blood Investigations</td></tr>'+
+    '<tr><td class="lbl">Height</td><td>'+unit(val('pHeight'),' cm')+'</td>'+
+    '<td class="lbl">Weight</td><td>'+unit(val('pWeight'),' kg')+'</td>'+
+    '<td class="lbl">BMI</td><td>'+dash(val('pBmi'))+'</td></tr>'+
+    '<tr><td class="lbl">Blood Group</td><td>'+dash(val('bGroup'))+'</td>'+
+    '<td class="lbl">Blood Pressure</td><td>'+dash(val('bBp'))+'</td>'+
+    '<td class="lbl">FBS</td><td>'+dash(val('bFbs'))+'</td></tr>'+
+    '<tr><td class="lbl">S. Creatinine</td><td>'+dash(val('bCreat'))+'</td>'+
+    '<td class="lbl">SGOT</td><td>'+dash(val('bSgot'))+'</td>'+
+    '<td class="lbl">SGPT</td><td>'+dash(val('bSgpt'))+'</td></tr>'+
+    '<tr><td class="lbl">Lipid Profile</td><td colspan="5">'+dash(val('bLipid'))+'</td></tr>'+
+    '</tbody></table>';
+
+  /* --- Infectious diseases --- */
+  html += '<table class="bordered"><tbody>'+
+    '<tr><td colspan="6" class="sec-head">Infectious Disease Screening</td></tr>'+
+    '<tr><td class="lbl">HIV</td><td>'+mark(val('idHiv'),['Reactive'])+'</td>'+
+    '<td class="lbl">VDRL</td><td>'+mark(val('idVdrl'),['Reactive'])+'</td>'+
+    '<td class="lbl">HBsAg</td><td>'+mark(val('idHbsag'),['Positive'])+'</td></tr>'+
+    '</tbody></table>';
+
+  /* --- Vision + hearing + mental --- */
+  html += '<table class="bordered"><tbody>'+
+    '<tr><td colspan="6" class="sec-head">Vision, Hearing &amp; Mental Examination</td></tr>'+
+    '<tr><td class="lbl">Colour Vision</td><td>'+mark(val('vColour'),['Defective'])+'</td>'+
+    '<td class="lbl">Vision Type</td><td colspan="3">'+dash(val('vAided'))+'</td></tr>'+
+    '<tr><td class="lbl">Near Vision</td><td colspan="2">L: '+dash(val('vNearL'))+'</td>'+
+    '<td colspan="3">R: '+dash(val('vNearR'))+'</td></tr>'+
+    '<tr><td class="lbl">Far Vision</td><td colspan="2">L: '+dash(val('vFarL'))+'</td>'+
+    '<td colspan="3">R: '+dash(val('vFarR'))+'</td></tr>'+
+    '<tr><td class="lbl">Hearing</td><td colspan="2">Left Ear: '+mark(val('hLeft'),['Abnormal'])+'</td>'+
+    '<td colspan="3">Right Ear: '+mark(val('hRight'),['Abnormal'])+'</td></tr>'+
+    '<tr><td class="lbl">Speech</td><td colspan="2">'+mark(val('mSpeech'),['Abnormal'])+'</td>'+
+    '<td class="lbl">Behaviour</td><td colspan="2">'+mark(val('mBehaviour'),['Abnormal'])+'</td></tr>'+
+    '</tbody></table>';
+
+  /* --- CXR + systems --- */
+  var sysRows = '';
+  for(var i=0;i<SYSTEM_EXAMS.length;i+=3){
+    sysRows += '<tr>';
+    for(var j=i;j<i+3;j++){
+      if(SYSTEM_EXAMS[j]){
+        sysRows += '<td class="lbl">'+esc(SYSTEM_EXAMS[j][1])+'</td>'+
+                   '<td>'+mark(val(SYSTEM_EXAMS[j][0]),['Abnormal'])+'</td>';
+      }else{
+        sysRows += '<td></td><td></td>';
+      }
+    }
+    sysRows += '</tr>';
+  }
+  html += '<table class="bordered"><tbody>'+
+    '<tr><td colspan="6" class="sec-head">Chest X-ray &amp; System Examination</td></tr>'+
+    '<tr><td class="lbl">Chest X-ray</td><td colspan="5">'+dash(val('cxr'))+'</td></tr>'+
+    sysRows+
+    '</tbody></table>';
+
+  /* --- Declaration --- */
+  html += '<div class="declaration">'+
+    'I hereby certify that I have examined the above-named person and, on the basis of '+
+    'the examination and investigations recorded above, the person is declared:'+
+    '<div class="verdict">'+decl.verdict+'</div>';
+  if(decl.reasons.length){
+    html += '<ul class="decl-reasons">';
+    for(var r=0;r<decl.reasons.length;r++){
+      html += '<li>'+esc(decl.reasons[r])+'</li>';
+    }
+    html += '</ul>';
+  }
+  html += '</div>';
+
+  /* --- Signature block --- */
+  var sigImgs = '';
+  if(state.images.signature) sigImgs += '<img class="sig" src="'+state.images.signature+'" alt="Signature">';
+  if(state.images.stamp)     sigImgs += '<img class="stamp" src="'+state.images.stamp+'" alt="Stamp">';
+  html += '<div class="sign-row">'+
+    '<div class="date-block"><span class="lbl">Date:</span> '+fmtDate(val('reportDate'))+'</div>'+
+    '<div class="sign-block">'+
+      (sigImgs ? '<div class="sign-imgs">'+sigImgs+'</div>' : '<div class="sign-imgs"></div>')+
+      '<div class="sign-line">'+
+        '<strong>'+dash(val('doctorName'))+'</strong><br>'+
+        dash(val('doctorQuals'))+'<br>'+
+        'SLMC Reg. No: '+dash(val('slmcNo'))+
+      '</div>'+
+    '</div></div>';
+
+  /* --- Footer --- */
+  html += '<div class="cert-footer">'+
+    dash(val('doctorName'))+' &nbsp;|&nbsp; '+dash(val('doctorQuals'))+
+    ' &nbsp;|&nbsp; SLMC No: '+dash(val('slmcNo'))+'<br>'+
+    dash(val('clinicAddress'))+' &nbsp;|&nbsp; Tel: '+dash(val('clinicPhone'))+
+    '</div>';
+
+  return html;
+}
+
+/* Small helpers for certificate rows */
+function tr2(l1,v1,l2,v2){
+  return '<tr><td class="lbl">'+esc(l1)+'</td><td>'+dash(v1)+'</td>'+
+         '<td class="lbl">'+esc(l2)+'</td><td>'+dash(v2)+'</td></tr>';
+}
+function fmtDateRaw(iso){ return iso ? fmtDate(iso) : ''; }
+function unit(v,u){ var t = String(v||'').trim(); return t ? esc(t)+u : '&mdash;'; }
+
+/* -------------------- 7. EVENTS / EXPORT / IMPORT / RESET -------------------- */
+function bindEvents(){
+  /* Live updates: every stored field re-renders + saves */
+  eachStoredField(function(el){
+    el.addEventListener('input', onFieldChange);
+    el.addEventListener('change', onFieldChange);
+  });
+
+  /* Enter key moves to next field (keyboard friendly) */
+  document.getElementById('formPanel').addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON'){
+      e.preventDefault();
+      focusNext(e.target);
+    }
+  });
+
+  /* Image uploads */
+  var files = document.querySelectorAll('input[type=file][data-img]');
+  for(var i=0;i<files.length;i++){
+    files[i].addEventListener('change', onImageUpload);
+  }
+  var clears = document.querySelectorAll('[data-clear]');
+  for(var c=0;c<clears.length;c++){
+    clears[c].addEventListener('click', onImageClear);
+  }
+
+  /* Toolbar */
+  document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+  document.getElementById('btnExport').addEventListener('click', exportJson);
+  document.getElementById('btnImport').addEventListener('click', function(){
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', importJson);
+  document.getElementById('btnReset').addEventListener('click', resetAll);
+}
+
+function onFieldChange(e){
+  validateField(e.target);
+  renderAll();
+  saveData();
+}
+
+function focusNext(current){
+  var focusable = document.querySelectorAll(
+    '#formPanel input:not([readonly]):not([type=file]), #formPanel select, #formPanel textarea');
+  for(var i=0;i<focusable.length;i++){
+    if(focusable[i] === current && focusable[i+1]){
+      focusable[i+1].focus();
+      return;
+    }
+  }
+}
+
+function onImageUpload(e){
+  var key = e.target.getAttribute('data-img');
+  var file = e.target.files && e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    state.images[key] = ev.target.result;
+    renderAll();
+    saveData();
+  };
+  reader.readAsDataURL(file);
+}
+
+function onImageClear(e){
+  var key = e.target.getAttribute('data-clear');
+  delete state.images[key];
+  var input = document.querySelector('input[data-img="'+key+'"]');
+  if(input) input.value = '';
+  renderAll();
+  saveData();
+}
+
+function exportJson(){
+  var data = { fields:{}, images:state.images, certNo:val('certNo') };
+  eachStoredField(function(el){ data.fields[el.id] = el.value; });
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (val('certNo') || 'certificate') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function importJson(e){
+  var file = e.target.files && e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var data = JSON.parse(ev.target.result);
+      applyData(data);
+      validateAll();
+      renderAll();
+      saveData();
+    }catch(err){
+      alert('Could not read this file. Please choose a JSON file exported from this application.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function resetAll(){
+  if(!confirm('Clear all patient data and start a new certificate?\nClinic details and images will also be cleared.')) return;
+  localStorage.removeItem(STORE_KEY);
+  state.images = {};
+  eachStoredField(function(el){ el.value = ''; });
+  document.getElementById('certNo').value = '';
+  var files = document.querySelectorAll('input[type=file]');
+  for(var i=0;i<files.length;i++) files[i].value = '';
+  loadSampleClinicOnly();
+  ensureCertNumber();      // new number for the next certificate
+  setDefaultDates();
+  validateAll();
+  renderAll();
+  saveData();
+}
+
+/* After reset keep the clinic block pre-filled so daily use is faster */
+function loadSampleClinicOnly(){
+  var keys = ['clinicName','clinicAddress','clinicPhone','clinicEmail','slmcNo','doctorName','doctorQuals'];
+  for(var i=0;i<keys.length;i++){
+    var el = document.getElementById(keys[i]);
+    if(el) el.value = SAMPLE_DATA[keys[i]] || '';
+  }
+  /* Sensible defaults for selects after reset */
+  var defaults = {idHiv:'Non Reactive', idVdrl:'Non Reactive', idHbsag:'Negative',
+                  vColour:'Normal', vAided:'Unaided', hLeft:'Normal', hRight:'Normal',
+                  mSpeech:'Normal', mBehaviour:'Normal', pGender:'Male', bGroup:'O+'};
+  for(var k in defaults){
+    var s = document.getElementById(k);
+    if(s) s.value = defaults[k];
+  }
+  for(var j=0;j<SYSTEM_EXAMS.length;j++){
+    var sel = document.getElementById(SYSTEM_EXAMS[j][0]);
+    if(sel) sel.value = 'Normal';
+  }
+}
+
+/* Boot */
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
