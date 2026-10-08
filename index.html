@@ -189,9 +189,41 @@ input[type=file]{font-size:12px;width:100%}
   display:block;
   margin:0 auto;
 }
-.cert .lh-placeholder .clinic-name{
-  font-size:15pt;font-weight:bold;letter-spacing:.5pt;
+.cert .lh-placeholder{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10pt;
 }
+.cert .lh-left{
+  display:flex;
+  align-items:center;
+  gap:8pt;
+  text-align:left;
+}
+.cert .lh-badge{
+  width:28pt;height:28pt;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14pt;line-height:1;
+  flex:0 0 auto;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+.cert .lh-placeholder .clinic-name{
+  font-size:15pt;font-weight:bold;letter-spacing:.5pt;line-height:1.15;
+}
+.cert .lh-placeholder .clinic-tagline{
+  font-size:7.8pt;letter-spacing:.8pt;text-transform:uppercase;color:#45586a;
+}
+.cert .lh-right{
+  text-align:right;
+  font-size:8.3pt;
+  line-height:1.4;
+}
+.cert .lh-right .reg{font-weight:bold}
 .cert .lh-placeholder .clinic-line{font-size:9pt}
 .cert .top-row{
   display:flex;
@@ -875,9 +907,18 @@ function buildCertificateHtml(decl){
     html += '<img src="'+img.letterhead+'" alt="Clinic letterhead">';
   }else{
     html += '<div class="lh-placeholder">'+
-      '<div class="clinic-name">'+dash(val('clinicName'))+'</div>'+
-      '<div class="clinic-line">'+dash(val('clinicAddress'))+'</div>'+
-      '<div class="clinic-line">Tel: '+dash(val('clinicPhone'))+' &nbsp;|&nbsp; Email: '+dash(val('clinicEmail'))+'</div>'+
+      '<div class="lh-left">'+
+        '<div class="lh-badge">&#9877;</div>'+
+        '<div>'+
+          '<div class="clinic-name">'+dash(val('clinicName'))+'</div>'+
+          '<div class="clinic-tagline">Medical Fitness Certification</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="lh-right">'+
+        '<div>'+dash(val('clinicAddress'))+'</div>'+
+        '<div>Tel: '+dash(val('clinicPhone'))+' &nbsp;|&nbsp; '+dash(val('clinicEmail'))+'</div>'+
+        '<div class="reg">SLMC Reg. No: '+dash(val('slmcNo'))+'</div>'+
+      '</div>'+
       '</div>';
   }
   html += '</div>';
