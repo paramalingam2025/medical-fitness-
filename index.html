@@ -179,52 +179,68 @@ input[type=file]{font-size:12px;width:100%}
 }
 .cert .letterhead{
   text-align:center;
-  border-bottom:2.5pt double #000;
-  padding-bottom:4pt;
+  border-bottom:1.5pt solid #000;
+  padding-bottom:5pt;
   margin-bottom:6pt;
 }
-.cert .letterhead img{
+.cert .letterhead img.full-letterhead{
   max-width:100%;
   max-height:30mm;
   display:block;
   margin:0 auto;
 }
-.cert .lh-placeholder{
+.cert .lh-row{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10pt;
-}
-.cert .lh-left{
-  display:flex;
-  align-items:center;
   gap:8pt;
-  text-align:left;
 }
-.cert .lh-badge{
-  width:28pt;height:28pt;
+.cert .lh-col{flex:1 1 0;min-width:0}
+.cert .lh-doctor{
+  text-align:left;
+  font-size:8.4pt;
+  line-height:1.45;
+}
+.cert .lh-doctor .doc-name{font-weight:bold;font-size:9.3pt}
+.cert .lh-brand{
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:1pt;
+}
+.cert .lh-logo{
+  max-width:24mm;max-height:20mm;
+  object-fit:contain;
+}
+.cert .lh-logo-badge{
+  width:18mm;height:18mm;
   border-radius:50%;
   background:var(--accent);
   color:#fff;
   display:flex;align-items:center;justify-content:center;
-  font-size:14pt;line-height:1;
-  flex:0 0 auto;
+  font-size:13pt;line-height:1;
   -webkit-print-color-adjust:exact;
   print-color-adjust:exact;
 }
-.cert .lh-placeholder .clinic-name{
-  font-size:15pt;font-weight:bold;letter-spacing:.5pt;line-height:1.15;
+.cert .lh-brand .brand-name{
+  font-size:11pt;font-weight:bold;letter-spacing:.3pt;margin-top:2pt;
 }
-.cert .lh-placeholder .clinic-tagline{
-  font-size:7.8pt;letter-spacing:.8pt;text-transform:uppercase;color:#45586a;
+.cert .lh-brand .brand-tagline{
+  font-size:6.6pt;letter-spacing:.6pt;text-transform:uppercase;color:#45586a;
 }
-.cert .lh-right{
+.cert .lh-clinic{
   text-align:right;
-  font-size:8.3pt;
-  line-height:1.4;
+  font-size:8.4pt;
+  line-height:1.45;
 }
-.cert .lh-right .reg{font-weight:bold}
-.cert .lh-placeholder .clinic-line{font-size:9pt}
+.cert .lh-clinic .clinic-name2{font-weight:bold;font-size:9.8pt}
+.cert .lh-contact-row{
+  text-align:center;
+  font-size:8pt;
+  margin-top:4pt;
+}
 .cert .top-row{
   display:flex;
   justify-content:space-between;
@@ -364,6 +380,8 @@ input[type=file]{font-size:12px;width:100%}
       <legend>Clinic Details</legend>
       <div class="field"><label for="clinicName">Clinic Name</label>
         <input type="text" id="clinicName" data-store></div>
+      <div class="field"><label for="clinicTagline">Clinic Tagline (optional)</label>
+        <input type="text" id="clinicTagline" data-store placeholder="e.g. Better Health, Better Community"></div>
       <div class="field"><label for="clinicAddress">Address</label>
         <input type="text" id="clinicAddress" data-store></div>
       <div class="row">
@@ -372,6 +390,8 @@ input[type=file]{font-size:12px;width:100%}
         <div class="field"><label for="clinicEmail">Email</label>
           <input type="email" id="clinicEmail" data-store></div>
       </div>
+      <div class="field"><label for="clinicWebsite">Website (optional)</label>
+        <input type="text" id="clinicWebsite" data-store placeholder="www.yourclinic.com"></div>
       <div class="field"><label for="slmcNo">SLMC Registration Number</label>
         <input type="text" id="slmcNo" data-store></div>
       <div class="row">
@@ -385,7 +405,12 @@ input[type=file]{font-size:12px;width:100%}
     <!-- Images -->
     <fieldset>
       <legend>Images (optional)</legend>
-      <div class="field"><label for="upLetterhead">Clinic Letterhead</label>
+      <div class="field"><label for="upLogo">Clinic Logo (shown centered in header)</label>
+        <div class="file-actions">
+          <input type="file" id="upLogo" accept="image/*" data-img="logo">
+          <button type="button" class="btn small secondary" data-clear="logo">Clear</button>
+        </div></div>
+      <div class="field"><label for="upLetterhead">Full Custom Letterhead (optional, replaces entire header)</label>
         <div class="file-actions">
           <input type="file" id="upLetterhead" accept="image/*" data-img="letterhead">
           <button type="button" class="btn small secondary" data-clear="letterhead">Clear</button>
@@ -640,14 +665,16 @@ var SYSTEM_EXAMS = [
   ['sysDeform','Deformities']
 ];
 
-var IMAGE_KEYS = ['letterhead','photo','signature','stamp'];
+var IMAGE_KEYS = ['letterhead','logo','photo','signature','stamp'];
 
 /* Sample data loaded on very first run only */
 var SAMPLE_DATA = {
   clinicName:'AARANYA MEDICALS',
+  clinicTagline:'Better Health, Better Community',
   clinicAddress:'Main Street, Manipay, Jaffna, Sri Lanka',
   clinicPhone:'+94 77 000 0000',
   clinicEmail:'aaranyamedicals@gmail.com',
+  clinicWebsite:'www.aaranyamedicals.com',
   slmcNo:'40150',
   doctorName:'Dr. P. Umapathisivan',
   doctorQuals:'MBBS',
@@ -904,21 +931,28 @@ function buildCertificateHtml(decl){
   /* --- Letterhead --- */
   html += '<div class="letterhead">';
   if(img.letterhead){
-    html += '<img src="'+img.letterhead+'" alt="Clinic letterhead">';
+    html += '<img class="full-letterhead" src="'+img.letterhead+'" alt="Clinic letterhead">';
   }else{
-    html += '<div class="lh-placeholder">'+
-      '<div class="lh-left">'+
-        '<div class="lh-badge">&#9877;</div>'+
-        '<div>'+
-          '<div class="clinic-name">'+dash(val('clinicName'))+'</div>'+
-          '<div class="clinic-tagline">Medical Fitness Certification</div>'+
-        '</div>'+
+    html += '<div class="lh-row">'+
+      '<div class="lh-col lh-doctor">'+
+        '<div class="doc-name">'+dash(val('doctorName'))+'</div>'+
+        '<div>'+dash(val('doctorQuals'))+'</div>'+
+        '<div>SLMC '+dash(val('slmcNo'))+'</div>'+
       '</div>'+
-      '<div class="lh-right">'+
+      '<div class="lh-brand">'+
+        (img.logo ? '<img class="lh-logo" src="'+img.logo+'" alt="Clinic logo">' :
+          '<div class="lh-logo-badge">&#9877;</div>'+
+          '<div class="brand-name">'+dash(val('clinicName'))+'</div>'+
+          (val('clinicTagline') ? '<div class="brand-tagline">'+esc(val('clinicTagline'))+'</div>' : ''))+
+      '</div>'+
+      '<div class="lh-col lh-clinic">'+
+        '<div class="clinic-name2">'+dash(val('clinicName'))+'</div>'+
         '<div>'+dash(val('clinicAddress'))+'</div>'+
-        '<div>Tel: '+dash(val('clinicPhone'))+' &nbsp;|&nbsp; '+dash(val('clinicEmail'))+'</div>'+
-        '<div class="reg">SLMC Reg. No: '+dash(val('slmcNo'))+'</div>'+
+        '<div>'+dash(val('clinicPhone'))+'</div>'+
       '</div>'+
+      '</div>'+
+      '<div class="lh-contact-row">'+
+        dash(val('clinicEmail'))+(val('clinicWebsite') ? ' &nbsp;|&nbsp; '+esc(val('clinicWebsite')) : '')+
       '</div>';
   }
   html += '</div>';
@@ -1177,7 +1211,7 @@ function resetAll(){
 
 /* After reset keep the clinic block pre-filled so daily use is faster */
 function loadSampleClinicOnly(){
-  var keys = ['clinicName','clinicAddress','clinicPhone','clinicEmail','slmcNo','doctorName','doctorQuals'];
+  var keys = ['clinicName','clinicTagline','clinicAddress','clinicPhone','clinicEmail','clinicWebsite','slmcNo','doctorName','doctorQuals'];
   for(var i=0;i<keys.length;i++){
     var el = document.getElementById(keys[i]);
     if(el) el.value = SAMPLE_DATA[keys[i]] || '';
