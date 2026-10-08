@@ -160,7 +160,7 @@ input[type=file]{font-size:12px;width:100%}
   background:#fff;
   width:210mm;
   min-height:297mm;
-  padding:15mm 20mm;
+  padding:8mm 18mm 12mm 18mm;
   box-shadow:0 2px 14px rgba(20,40,60,.18);
   color:#000;
 }
@@ -331,7 +331,7 @@ input[type=file]{font-size:12px;width:100%}
    ============================================================ */
 @page{
   size:A4;
-  margin:15mm 20mm;
+  margin:8mm 18mm 12mm 18mm;
 }
 @media print{
   body{background:#fff}
@@ -344,8 +344,18 @@ input[type=file]{font-size:12px;width:100%}
     padding:0;margin:0;
     box-shadow:none;
   }
-  .cert{font-size:9.6pt}
-  .cert table.bordered td,.cert table.bordered th{font-size:8.8pt;padding:1pt 3pt}
+  .cert{font-size:9.4pt;line-height:1.2}
+  .cert table.bordered td,.cert table.bordered th{font-size:8.6pt;padding:1pt 3pt}
+  .cert table{margin-bottom:3pt}
+  .cert .letterhead{padding-bottom:3pt;margin-bottom:4pt}
+  .cert .lh-logo{max-width:20mm;max-height:15mm}
+  .cert .lh-logo-badge{width:14mm;height:14mm;font-size:10pt}
+  .cert .lh-brand .brand-name{font-size:10pt;margin-top:1pt}
+  .cert .lh-contact-row{margin-top:2pt}
+  .cert h2.cert-title{margin:2pt 0 4pt 0}
+  .cert .declaration{padding:3pt 7pt;margin:3pt 0}
+  .cert .sign-row{margin-top:6pt}
+  .cert .cert-footer{margin-top:5pt;padding-top:2pt}
   .cert,.sheet{page-break-inside:avoid}
   .cert .sec-head,.cert table.bordered th{
     background:#eee !important;
